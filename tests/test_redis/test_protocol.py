@@ -25,11 +25,7 @@ def test_slow():
     req = b'*1\r\n$4\r\nPING\r\n'
     resp = b'+PONG\r\n'
 
-    if large > 1000:
-        sleep = 1
-    else:
-        sleep = .1
-
+    sleep = 1 if large > 1000 else .1
     _test(req, resp, sleep)
 
 def test_pingpong():

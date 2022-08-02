@@ -58,7 +58,7 @@ def test_fast_req_lua():
 def disabled_test_slow_req():
     r = getconn()
 
-    kv = {'mkkk-%s' % i : 'mvvv-%s' % i for i in range(500000)}
+    kv = {f'mkkk-{i}': f'mvvv-{i}' for i in range(500000)}
 
     pipe = r.pipeline(transaction=False)
     pipe.set('key-1', 'v1')
@@ -95,7 +95,7 @@ def test_nc_stats():
     nc.stop() #reset counters
     nc.start()
     r = getconn()
-    kv = {'kkk-%s' % i :'vvv-%s' % i for i in range(10)}
+    kv = {f'kkk-{i}': f'vvv-{i}' for i in range(10)}
     for k, v in list(kv.items()):
         r.set(k, v)
         r.get(k)

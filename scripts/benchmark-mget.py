@@ -18,9 +18,8 @@ def system(cmd):
     return commands.getoutput(cmd)
 
 def extra(regex, text):
-    match = re.search(regex, text, re.DOTALL)
-    if match:
-        return match.group(1)
+    if match := re.search(regex, text, re.DOTALL):
+        return match[1]
 
 def testit():
     for mget_size in [10, 100, 1000, 10000]:

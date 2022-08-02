@@ -55,7 +55,7 @@ def test_mget_mset_on_key_not_exist(kv=default_kv):
 
     keys = list(kv.keys())
     keys2 = [b'x-'+k for k in keys]
-    keys = keys + keys2
+    keys += keys2
     random.shuffle(keys)
 
     #mget to check
@@ -149,9 +149,7 @@ def test_mget_pipeline():
         pipe.set(k,v)
     keys = list(default_kv.keys())
     pipe.mget(keys)
-    kv = {}
-    for i in range(large):
-        kv[b'kkk-%d' % i] = os.urandom(100)
+    kv = {b'kkk-%d' % i: os.urandom(100) for i in range(large)}
     for k,v in list(kv.items()):
         pipe.set(k,v)
     for k in list(kv.keys()):
@@ -180,16 +178,16 @@ def test_multi_delete_normal():
     r = getconn()
 
     for i in range(100):
-        r.set('key-%s'%i, 'val-%s'%i)
+        r.set(f'key-{i}', f'val-{i}')
 
     for i in range(100):
-        assert_equal(bytes('val-%s'%i, encoding='utf-8'), r.get('key-%s'%i) )
+        assert_equal(bytes(f'val-{i}', encoding='utf-8'), r.get(f'key-{i}'))
 
-    keys = ['key-%s'%i for i in range(100)]
+    keys = [f'key-{i}' for i in range(100)]
     assert_equal(100, r.delete(*keys))
 
     for i in range(100):
-        assert_equal(None, r.get('key-%s'%i) )
+        assert_equal(None, r.get(f'key-{i}'))
 
 def test_multi_delete_on_readonly():
     all_redis[0].slaveof(all_redis[1].args['host'], all_redis[1].args['port'])
@@ -239,7 +237,7 @@ def test_multi_delete_20140525():
     r = getconn()
 
     cnt = 126
-    keys = ['key-%s'%i for i in range(cnt)]
+    keys = [f'key-{i}' for i in range(cnt)]
     pipe = r.pipeline(transaction=False)
     pipe.mget(keys)
     pipe.delete(*keys)

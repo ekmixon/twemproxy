@@ -20,7 +20,7 @@ nc_nopass = NutCracker('127.0.0.1', 4102, '/tmp/r/nutcracker-4102', CLUSTER_NAME
                        all_redis, mbuf=mbuf, verbose=nc_verbose)
 
 def setup():
-    print('setup(mbuf=%s, verbose=%s)' %(mbuf, nc_verbose))
+    print(f'setup(mbuf={mbuf}, verbose={nc_verbose})')
     for r in all_redis + [nc, nc_badpass, nc_nopass]:
         r.clean()
         r.deploy()
@@ -32,11 +32,13 @@ def teardown():
         assert(r._alive())
         r.stop()
 
-default_kv = {bytes('kkk-%s' % i, encoding='utf-8') : bytes('vvv-%s' % i, encoding='utf-8') for i in range(10)}
+default_kv = {
+    bytes(f'kkk-{i}', encoding='utf-8'): bytes(f'vvv-{i}', encoding='utf-8')
+    for i in range(10)
+}
 
 def getconn():
-    r = redis.Redis(nc.host(), nc.port())
-    return r
+    return redis.Redis(nc.host(), nc.port())
 
 '''
 
@@ -97,7 +99,6 @@ def test_nopass_on_proxy():
 
     # proxy has no pass, when we try to auth
     assert_fail('Client sent AUTH, but no password is set', r.execute_command, 'AUTH', 'anypasswd')
-    pass
 
 def test_badpass_on_proxy():
     r = redis.Redis(nc_badpass.host(), nc_badpass.port())

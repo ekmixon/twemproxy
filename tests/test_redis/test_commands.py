@@ -59,17 +59,14 @@ def test_hscan_large():
         for k, v in list(t.items()):
             dic[k] = v
 
-        if '0' == str(cursor):
+        if str(cursor) == '0':
             break
 
     assert(dic == kv)
 
     cursor, dic = r.hscan('a', '0', match='*kkk-5*', count=1000)
-    if str(cursor) == '0':
-        assert(len(dic) == 111)
-    else:
-        assert(len(dic) == 111)
-
+    assert(len(dic) == 111)
+    if str(cursor) != '0':
         #again.
         cursor, dic = r.hscan('a', cursor, match='*kkk-5*', count=1000)
         assert(str(cursor) == '0')

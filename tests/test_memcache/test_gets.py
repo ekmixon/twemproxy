@@ -44,7 +44,7 @@ def teardown():
     nc.stop()
 
 def getconn():
-    host_port = '%s:%s' % (nc.host(), nc.port())
+    host_port = f'{nc.host()}:{nc.port()}'
     return memcache.Client([host_port])
 
 def test_basic():
@@ -60,7 +60,7 @@ def test_basic():
     conn.delete("key")
     assert(None == conn.get('key'))
 
-default_kv = {'kkk-%s' % i :'vvv-%s' % i for i in range(10)}
+default_kv = {f'kkk-{i}': f'vvv-{i}' for i in range(10)}
 def test_mget_mset(kv=default_kv):
     conn = getconn()
     conn.set_multi(kv)
@@ -77,7 +77,7 @@ def test_mget_mset(kv=default_kv):
 def test_mget_mset_large():
     for cnt in range(179, large, 179):
         #print 'test', cnt
-        kv = {'kkk-%s' % i :'vvv-%s' % i for i in range(cnt)}
+        kv = {f'kkk-{i}': f'vvv-{i}' for i in range(cnt)}
         test_mget_mset(kv)
 
 def test_mget_mset_key_not_exists(kv=default_kv):
@@ -85,14 +85,14 @@ def test_mget_mset_key_not_exists(kv=default_kv):
     conn.set_multi(kv)
 
     keys = list(kv.keys())
-    keys2 = ['x-'+k for k in keys]
-    keys = keys + keys2
+    keys2 = [f'x-{k}' for k in keys]
+    keys += keys2
     random.shuffle(keys)
 
-    for i in range(2):
+    for _ in range(2):
         #mget to check
         vals = conn.get_multi(keys)
-        for i, k in enumerate(keys):
+        for k in keys:
             if k in kv:
                 assert(kv[k] == vals[k])
             else:

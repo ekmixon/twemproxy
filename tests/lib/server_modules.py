@@ -39,7 +39,7 @@ class Base:
         return TT('[$name:$host:$port]', self.args)
 
     def deploy(self):
-        logging.info('deploy %s' % self)
+        logging.info(f'deploy {self}')
         self._run(TTCMD('mkdir -p $path/bin &&  \
                       mkdir -p $path/conf && \
                       mkdir -p $path/log &&  \
@@ -55,17 +55,16 @@ class Base:
 
         control_filename = TT('${path}/${name}_control', self.args)
 
-        fout = open(control_filename, 'w+')
-        fout.write(content)
-        fout.close()
+        with open(control_filename, 'w+') as fout:
+            fout.write(content)
         os.chmod(control_filename, 0o755)
 
     def start(self):
         if self._alive():
-            logging.warning('%s already running' % (self))
+            logging.warning(f'{self} already running')
             return
 
-        logging.debug('starting %s' % self)
+        logging.debug(f'starting {self}')
         t1 = time.time()
         sleeptime = .1
 
@@ -78,14 +77,14 @@ class Base:
                 sleeptime *= 2
             else:
                 sleeptime = 5.0
-                logging.warning('%s still not alive' % self)
+                logging.warning(f'{self} still not alive')
 
         t2 = time.time()
         logging.info('%s start ok in %.2f seconds' %(self, t2-t1))
 
     def stop(self):
         if not self._alive():
-            logging.warning('%s already stop' %(self))
+            logging.warning(f'{self} already stop')
             return
 
         cmd = TT("cd $path && ./${name}_control stop", self.args)
@@ -169,33 +168,31 @@ class RedisServer(Base):
         self.args['BINS'] = conf.BINARYS['REDIS_SERVER_BINS']
         self._run(TT('cp $BINS $path/bin/', self.args))
 
-        fout = open(TT('$path/conf/redis.conf', self.args), 'w+')
-        fout.write(self._gen_conf())
-        fout.close()
+        with open(TT('$path/conf/redis.conf', self.args), 'w+') as fout:
+            fout.write(self._gen_conf())
 
     def status(self):
-        uptime = self._info_dict()['uptime_in_seconds']
-        if uptime:
-            logging.info('%s uptime %s seconds' % (self, uptime))
+        if uptime := self._info_dict()['uptime_in_seconds']:
+            logging.info(f'{self} uptime {uptime} seconds')
         else:
-            logging.error('%s is down' % self)
+            logging.error(f'{self} is down')
 
     def isslaveof(self, master_host, master_port):
         info = self._info_dict()
         if info['master_host'] == master_host and \
-           int(info['master_port']) == master_port:
-            logging.debug('already slave of %s:%s' % (master_host, master_port))
+               int(info['master_port']) == master_port:
+            logging.debug(f'already slave of {master_host}:{master_port}')
             return True
 
     def slaveof(self, master_host, master_port):
-        cmd = 'SLAVEOF %s %s' % (master_host, master_port)
+        cmd = f'SLAVEOF {master_host} {master_port}'
         return self.rediscmd(cmd)
 
     def rediscmd(self, cmd):
         args = copy.deepcopy(self.args)
         args['cmd'] = cmd
         cmd = TT('$REDIS_CLI -h $host -p $port $cmd', args)
-        logging.info('%s %s' % (self, cmd))
+        logging.info(f'{self} {cmd}')
         return self._run(cmd)
 
 class RedisSentinel(RedisServer):
@@ -219,8 +216,7 @@ sentinel down-after-milliseconds $server_name %d
 sentinel parallel-syncs $server_name 1
 sentinel failover-timeout $server_name 180000
 ''' % (self.quorum, self.down_time)
-        cfg = '\n'.join([TT(template, master.args) for master in self.masters])
-        return cfg
+        return '\n'.join([TT(template, master.args) for master in self.masters])
 
     def _gen_conf(self):
         content = open(os.path.join(WORKDIR, 'conf/sentinel.conf'), 'r').read()
@@ -233,12 +229,11 @@ sentinel failover-timeout $server_name 180000
         self.args['BINS'] = conf.BINARYS['REDIS_SERVER_BINS']
         self._run(TT('cp $BINS $path/bin/', self.args))
 
-        fout = open(TT('$path/conf/sentinel.conf', self.args), 'w+')
-        fout.write(self._gen_conf())
-        fout.close()
+        with open(TT('$path/conf/sentinel.conf', self.args), 'w+') as fout:
+            fout.write(self._gen_conf())
 
     def failover(self, server_name):
-        cmd = 'SENTINEL FAILOVER %s' % server_name
+        cmd = f'SENTINEL FAILOVER {server_name}'
         return self.rediscmd(cmd)
 
 class Memcached(Base):
@@ -290,8 +285,7 @@ class NutCracker(Base):
 
     def _gen_conf_section(self, servers):
         template = '    - $host:$port:1 $server_name'
-        cfg = '\n'.join([TT(template, server.args) for server in servers])
-        return cfg
+        return '\n'.join([TT(template, server.args) for server in servers])
 
     def _gen_conf(self):
         content = '''
@@ -326,9 +320,8 @@ $cluster_name:
         self.args['BINS'] = conf.BINARYS['NUTCRACKER_BINS']
         self._run(TT('cp $BINS $path/bin/', self.args))
 
-        fout = open(TT('$path/conf/nutcracker.conf', self.args), 'w+')
-        fout.write(self._gen_conf())
-        fout.close()
+        with open(TT('$path/conf/nutcracker.conf', self.args), 'w+') as fout:
+            fout.write(self._gen_conf())
 
     def version(self):
         #This is nutcracker-0.4.0
@@ -352,7 +345,7 @@ $cluster_name:
         self.stop()
         self.deploy()
         self.start()
-        logging.info('proxy %s:%s is updated' % (self.args['host'], self.args['port']))
+        logging.info(f"proxy {self.args['host']}:{self.args['port']} is updated")
 
     def logfile(self):
         return self.args['logfile']
@@ -370,9 +363,7 @@ $cluster_name:
         self.signal('USR1')
 
     def set_config(self, content):
-        fout = open(TT('$path/conf/nutcracker.conf', self.args), 'w+')
-        fout.write(content)
-        fout.close()
-
+        with open(TT('$path/conf/nutcracker.conf', self.args), 'w+') as fout:
+            fout.write(content)
         self.reload()
 

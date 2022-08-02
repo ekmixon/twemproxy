@@ -36,7 +36,7 @@ nc = NutCracker('127.0.0.1', 4100, '/tmp/r/nutcracker-4100', CLUSTER_NAME,
                 all_redis, mbuf=mbuf, verbose=nc_verbose)
 
 def _setup():
-    print('setup(mbuf=%s, verbose=%s)' %(mbuf, nc_verbose))
+    print(f'setup(mbuf={mbuf}, verbose={nc_verbose})')
     for r in all_redis + [nc]:
         r.deploy()
         r.stop()
@@ -61,7 +61,7 @@ def send_cmd(s, req, resp):
 @with_setup(_setup, _teardown)
 def test_reload_with_old_conf():
     if nc.version() < VERSION_SUPPORTING_RELOAD:
-        print('Ignore test_reload for version %s' % nc.version())
+        print(f'Ignore test_reload for version {nc.version()}')
         return
     pid = nc.pid()
     # print 'old pid:', pid
@@ -101,7 +101,7 @@ def test_reload_with_old_conf():
 @with_setup(_setup, _teardown)
 def test_new_port():
     if nc.version() < VERSION_SUPPORTING_RELOAD:
-        print('Ignore test_reload for version %s' % nc.version())
+        print(f'Ignore test_reload for version {nc.version()}')
         return
     r = redis.Redis(nc.host(), nc.port())
     r.set('k', 'v')
@@ -130,7 +130,7 @@ reload_test:
 @with_setup(_setup, _teardown)
 def test_pool_add_del():
     if nc.version() < VERSION_SUPPORTING_RELOAD:
-        print('Ignore test_reload for version %s' % nc.version())
+        print(f'Ignore test_reload for version {nc.version()}')
         return
 
     r = redis.Redis(nc.host(), nc.port())
@@ -179,7 +179,7 @@ reload_test:
     nc.set_config(content)
     time.sleep(T_RELOAD_DELAY)
     pid = nc.pid()
-    print(system('ls -l /proc/%s/fd/' % pid))
+    print(system(f'ls -l /proc/{pid}/fd/'))
 
     r3 = redis.Redis(nc.host(), 4102)
 
@@ -187,7 +187,7 @@ reload_test:
     assert_fail('Connection refused', r2.get, 'k')
     assert(r3.get('k') == 'v')
 
-    fds = system('ls -l /proc/%s/fd/' % pid)
+    fds = system(f'ls -l /proc/{pid}/fd/')
     sockets = [s for s in fds.split('\n') if strstr(s, 'socket:') ]
     # pool + stat + 2 backend + 1 client
     assert(len(sockets) == 5)

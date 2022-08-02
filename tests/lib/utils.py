@@ -26,9 +26,7 @@ PWD = os.path.dirname(os.path.realpath(__file__))
 WORKDIR = os.path.join(PWD,  '../')
 
 def getenv(key, default):
-    if key in os.environ:
-        return os.environ[key]
-    return default
+    return os.environ[key] if key in os.environ else default
 
 logfile = getenv('T_LOGFILE', 'log/t.log')
 if logfile == '-':
@@ -65,8 +63,10 @@ def nothrow(ExceptionToCheck=Exception, logger=None):
                 if logger:
                     logger.info(e)
                 else:
-                    print(str(e))
+                    print(e)
+
         return f_retry  # true decorator
+
     return deco_retry
 
 @nothrow(Exception)
@@ -85,19 +85,16 @@ def json_decode(j):
 #commands does not work on windows..
 def system(cmd, log_fun=logging.info):
     if log_fun: log_fun(cmd)
-    r = subprocess.getoutput(cmd)
-    return r
+    return subprocess.getoutput(cmd)
 
 def shorten(s, l=80):
-    if len(s)<=l:
-        return s
-    return s[:l-3] + '...'
+    return s if len(s)<=l else f'{s[:l-3]}...'
 
 def assert_true(a):
-    assert a, 'assert fail: except true, got %s' % a
+    assert a, f'assert fail: except true, got {a}'
 
 def assert_equal(a, b):
-    assert a == b, 'assert fail: %s vs %s' % (shorten(str(a)), shorten(str(b)))
+    assert a == b, f'assert fail: {shorten(str(a))} vs {shorten(str(b))}'
 
 def assert_raises(exception_cls, callable, *args, **kwargs):
     try:
@@ -105,8 +102,8 @@ def assert_raises(exception_cls, callable, *args, **kwargs):
     except exception_cls as e:
         return e
     except Exception as e:
-        assert False, 'assert_raises %s but raised: %s' % (exception_cls, e)
-    assert False, 'assert_raises %s but nothing raise' % (exception_cls)
+        assert False, f'assert_raises {exception_cls} but raised: {e}'
+    assert False, f'assert_raises {exception_cls} but nothing raise'
 
 def assert_fail(err_response, callable, *args, **kwargs):
     try:
@@ -116,7 +113,7 @@ def assert_fail(err_response, callable, *args, **kwargs):
                'assert "%s" but got "%s"' % (err_response, e)
         return
 
-    assert False, 'assert_fail %s but nothing raise' % (err_response)
+    assert False, f'assert_fail {err_response} but nothing raise'
 
 if __name__ == "__main__":
     test_nothrow()
